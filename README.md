@@ -1,8 +1,12 @@
 # Radon-DIT: Discrete Solutions of the Inverse Radon Problem
 
-This repository contains the source code for the numerical experiments described in the paper:
+# Radon-DIT: Discrete Solutions of the Inverse Radon Problem
 
-> **"The Direct Integration Theorem: A Rigorous Framework for Consistent Discrete Solutions of the Inverse Radon Problem"** (M. G. Mozerov).
+This repository contains the source code and datasets for the following paper:
+
+> **"The Direct Integration Theorem: A Rigorous Framework for Consistent Discrete Solutions of the Inverse Radon Problem"** (M. G. Mozerov). 
+> *Currently under review in IEEE Transactions on Pattern Analysis and Machine Intelligence (Submitted May 2026).*
+
 
 ## Overview
 This paper presents a novel Direct Integration Theorem (DIT), derived as a non-trivial corollary of the classical Central Slice Theorem (CST). The DIT provides a mathematically consistent transition from the continuous to the discrete domain—a fundamental challenge in computed tomography—thereby eliminating the need for frequency-domain interpolation without resorting to conventional ramp-filtering. 
