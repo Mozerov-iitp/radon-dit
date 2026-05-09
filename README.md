@@ -16,12 +16,15 @@ In this work, we present a numerical method for the inverse Radon transform that
 * **Accuracy:** High-precision results for discrete data sets.
 
 ## Repository Structure
-* `/code` — Implementation of the algorithm (Python/MATLAB).
-* `/data` — Input images and sinograms.
-* `/results` — Verification images and error analysis.
+* **DIT_VERSUS_FBP/** — Main C++ project directory.
+* **DIT_VERSUS_FBP/Direct__Integration__Mapping.sln** — Visual Studio 2022 Solution file.
+* **DIT_BIN/** — Test images and input data (phantom and sinograms).
 
 ## Getting Started
-(Здесь позже добавите инструкцию, какую кнопку нажать, чтобы запустить код)
+1. Install **Visual Studio 2022**.
+2. Open `DIT_VERSUS_FBP/Direct__Integration__Mapping.sln`.
+3. Set the configuration to **Release** / **x64**.
+4. Build and Run (F5).
 
 ## Citation
 If you use this code in your research, please cite:
