@@ -25,6 +25,7 @@ In this work, we present a numerical method for the inverse Radon transform that
 2. Open `DIT_VERSUS_FBP/Direct__Integration__Mapping.sln`.
 3. Set the configuration to **Release** / **x64**.
 4. Build and Run (F5).
+5. Note: When running the program, ensure the DIT_BIN folder is placed in the root of your drive, as the program will ask you to specify the drive letter (C, D, E, or F).
 
 ## Citation
 If you use this code in your research, please cite:
