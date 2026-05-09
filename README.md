@@ -1,6 +1,3 @@
-# radon-dit
-Discrete Solutions of the Inverse Radon Problem based on the Direct Integration Theorem
-markdown
 # Radon-DIT: Discrete Solutions of the Inverse Radon Problem
 
 This repository contains the source code for the numerical experiments described in the paper:
