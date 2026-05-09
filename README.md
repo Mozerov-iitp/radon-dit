@@ -1,7 +1,5 @@
 # Radon-DIT: Discrete Solutions of the Inverse Radon Problem
 
-# Radon-DIT: Discrete Solutions of the Inverse Radon Problem
-
 This repository contains the source code and datasets for the following paper:
 
 > **"The Direct Integration Theorem: A Rigorous Framework for Consistent Discrete Solutions of the Inverse Radon Problem"** (M. G. Mozerov). 
