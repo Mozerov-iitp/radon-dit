@@ -1,9 +1,44 @@
-﻿#pragma once
+﻿
+// ============================================================================
+// Direct_integration.h
+// ============================================================================
+// Copyright (c) Mikhail G. Mozerov
+// 
+// This file is part of the implementation accompanying the paper:
+// 
+//   Title:  "The Direct Integration Theorem: A Rigorous Framework for Consistent
+//           Discrete Solutions of the Inverse Radon Problem"
+//   Author: Mikhail G. Mozerov
+//   arXiv:  https://arxiv.org/abs/2605.09020 (submitted to IEEE TPAMI)
+//   Code:   https://github.com/Mozerov-iitp/radon-dit/
+// 
+// Permission is hereby granted to use this code for academic and research
+// purposes, provided that the original paper is cited.
+// ============================================================================
+//
+// This header implements the core of the Direct Integration Method (DIT)
+// for tomographic image reconstruction. The key function
+// dir_intgt_mapping_intrpl() directly maps sinogram data into the 2D Fourier
+// domain using angular interpolation and a frequency‑domain summation.
+// 
+// For details, please refer to the above paper, Section III (Direct Integration
+// Theorem) and Section IV (Discrete Implementation).
+//
+// ============================================================================
+
+#pragma once
 #include "inverse_fourier_transform.h"
 #include "Generate_sino.h"
 
 
-
+/**
+ * Extracts a projection at angle 'tet' using nearest‑neighbour interpolation.
+ * @param in   Sinogram array (angles major, detectors minor).
+ * @param D    Number of detectors (image width).
+ * @param A    Number of projection angles over 180°.
+ * @param tet  Desired angle in radians.
+ * @return     Complex array (real part = projection values, imag = 0).
+ */
 
 complex_dbl* GetSngmTet0(float* in, int D, int A, double tet) {
 
@@ -19,7 +54,9 @@ complex_dbl* GetSngmTet0(float* in, int D, int A, double tet) {
 
 	return ret;
 }
-
+/**
+ * Linear interpolation between two consecutive projections.
+ */
 complex_dbl* GetSngmTet1(float* in, int D, int A, double tet) {
 
 	double* b[2] = { new double [D], new double[D] };
@@ -42,6 +79,9 @@ complex_dbl* GetSngmTet1(float* in, int D, int A, double tet) {
 	delete[] b[1];
 	return ret;
 }
+/**
+ * Cubic spline interpolation (Catmull‑Rom style) over four adjacent angles.
+ */
 complex_dbl* GetSngmTetCubic(float* in, int D, int A, double tet) {
 
 	double* b[4] = { new double[D], new double[D], new double[D], new double[D] };
@@ -73,6 +113,10 @@ complex_dbl* GetSngmTetCubic(float* in, int D, int A, double tet) {
 	delete[] b[3];
 	return ret;
 }
+/**
+ * Dispatch function for angular interpolation.
+ * @param func  0=nearest, 1=linear, 2=cubic.
+ */
 complex_dbl* GetSngmTetIntrpl(int func, float* in, int D, int A, double tet) {
 
 	complex_dbl* ret = NULL;
@@ -82,7 +126,10 @@ complex_dbl* GetSngmTetIntrpl(int func, float* in, int D, int A, double tet) {
 
 	return ret;
 }
-
+/**
+ * Computes the contribution of all frequencies along the line t (detector index)
+ * for a given Fourier point (u,v). Used in Direct Integration.
+ */
 complex_dbl sum_for_point_u_v(complex_dbl* in, int u, int v, int D) {
 
 
@@ -95,7 +142,10 @@ complex_dbl sum_for_point_u_v(complex_dbl* in, int u, int v, int D) {
 	}
 	return sum;
 }
-
+/**
+ * Applies a circular low‑pass filter (energy compensation) to the Fourier data.
+ * Keeps frequencies inside radius D/2, rescales to preserve total energy.
+ */
 void kill_frq(complex_dbl* to_kill, int D, int A) {
 
 
@@ -126,6 +176,10 @@ void kill_frq(complex_dbl* to_kill, int D, int A) {
 	for (int p = 1; p < D * D; p++)to_kill[p] *= alph;
 
 }
+/**
+ * Overloaded version with additional rectangular cut‑off (lw parameter).
+ * lw > 0 restricts to |u|<lw*A/π and |v|<lw*A/π before circular cut.
+ */
 void kill_frq(double lw, complex_dbl* to_kill, int D, int A) {
 
 	if (lw)
@@ -162,8 +216,35 @@ void kill_frq(double lw, complex_dbl* to_kill, int D, int A) {
 	}
 	 else kill_frq(to_kill, D, A);
 }
-
-
+// ============================================================================
+// Function: dir_intgt_mapping_intrpl
+// ============================================================================
+// Implements the Direct Integration Mapping (DIM) – the core reconstruction
+// algorithm from the paper:
+//   "The Direct Integration Theorem: A Rigorous Framework for Consistent
+//    Discrete Solutions of the Inverse Radon Problem"
+//   Mikhail G. Mozerov (arXiv, submitted to IEEE TPAMI)
+//
+// Brief description:
+//   For each point (u,v) in the 2D Fourier domain (zero‑centered), the function
+//   determines the corresponding projection angle theta = atan2(v,u). It then
+//   extracts the 1D sinogram projection at that angle (using angular
+//   interpolation: nearest, linear, or cubic) and computes a weighted sum over
+//   detector positions t (via sum_for_point_u_v). The result fills the Fourier
+//   cell (u,v). Conjugate symmetry is exploited to reduce computation.
+//
+// Parameters:
+//   lw    – Spectrum correction parameter (frequency cut‑off / energy rescaling)
+//   func  – Interpolation type: 0 = nearest neighbour, 1 = linear, 2 = cubic
+//   in    – Input sinogram (float array, size A x D)
+//   D     – Number of detectors (and output image width)
+//   A     – Number of projection angles (over 180°)
+//
+// Returns:
+//   Pointer to a newly allocated array of complex_dbl of size D×D,
+//   containing the Fourier domain representation of the reconstructed image.
+//   The caller is responsible for deleting it.
+// ============================================================================
 complex_dbl* dir_intgt_mapping_intrpl(double lw,  int func, float* in, int D, int A) {
 
 	std::cout << "=======  Direct Integration Mapping  ======" << std::endl;
