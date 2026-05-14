@@ -23,44 +23,53 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-
-void  CH3_to_RGB(const char* name, unsigned char* in, int X, int Y, int C) {
-
-
+/**
+ * Converts a planar CH3 (channel‑interleaved) image to RGB packed format and saves as PNG.
+ * @param name  Output filename.
+ * @param in    Input planar buffer: first W*H bytes = channel 0, next = channel 1, etc.
+ * @param X     Image width.
+ * @param Y     Image height (unused, assumed equal to X).
+ * @param C     Number of channels (expected 3).
+ */
+void CH3_to_RGB(const char* name, unsigned char* in, int X, int Y, int C) {
     int W = X; int H = Y;
     unsigned char* ret = new unsigned char[W * H * C];
+    // Convert from planar (CCC…RRR…BBB) to interleaved (RGBRGB…)
     for (int x = 0; x < W; x++)
         for (int y = 0; y < H; y++) {
             int index = (y * W + x) * C;
             int c = 3;
             while (c--)
                 ret[index + c] = in[x + y * W + c * W * H];
-
         }
-
-    stbi_write_png(name,
-        X, X, 3, ret, 0);
+    stbi_write_png(name, X, X, 3, ret, 0);
     delete[] ret;
-
 }
 
-
+/**
+ * Main test routine for noise‑free Direct Integration reconstruction.
+ * @param lw    Spectrum correction parameter (for incomplete sinogram data).
+ * @param func  Interpolation type: 0=nearest, 1=linear, 2=cubic.
+ * @param name  Base name of the test image (without extension).
+ * @param path  Output folder path.
+ * @param A     Number of projection angles.
+ */
 void test_DIM(double lw, int func, const char* name, const char* path, int A) {
-    // double lw - — spectrum correction parameter 
-    // for incomplete data in the sinogram domain
+  
     std::ofstream file(gen_name(RESULT_TXT, name, path, A));
    
     int X, X_in, Y, Ch;
-
+    // Load input image (grayscale)
    unsigned char* imageData = 
        stbi_load(gen_name(IMAGE_IN, name, path, A), &X_in, &Y, &Ch, 1);
    
-    //------------------
+   // --- Generate sinogram and ground truth image (centered & padded to power‑of‑2) ---
+
     TST_RADON_IMG circle = { NULL,NULL};
     test_file_byte_sino(&circle, A, imageData, X_in,  Y, &X);
     write_pfm(gen_name(SINO, name, path, A), circle.sngm, circle.X, circle.A);
     stbi_write_png(gen_name(IMAGE_GT, name, path, A), circle.X, circle.X, 1, circle.img, circle.X);
-    //End of generation
+    // Optional verification of rotation operator (back‑and‑forth)
     bool Deb = 1; double rot_angle = M_PI / 4;
     if (Deb) {
         double psnr_img, psnr_sino;
@@ -78,18 +87,19 @@ void test_DIM(double lw, int func, const char* name, const char* path, int A) {
             ROT_ERR.psnr_sng += psnr_sino;
         }
     }
-    //____________________
-    //Start of reconstruction
+    // --- Reconstruction start ---
     int T, A_180;
     float* sino = read_pfm(gen_name(SINO, name, path, A), &T, &A_180);
-    //////// DIM PROCESS ///////////////////////
+    // Direct Integration Mapping (Fourier domain)
     complex_dbl* f_uv = 
         dir_intgt_mapping_intrpl(lw, func,circle.sngm, T, A_180);//
-    ////////////////////////////////////////////
-    //////// INVERSE  FFT //////////////////////
+    // Set DC component from sinogram mean
     f_uv[0] = { get_mean_from_sino(circle.sngm,  T, A_180),0 };
+    // Inverse 2D FFT to obtain reconstructed image
     double* rec_img = fft_2D_inv(f_uv, T);
-    ////////////////////////////////////////////
+
+    // Convert double result to byte arrays for PNG saving (absolute and error maps)
+
     unsigned char* byte_rec_image = new unsigned char[T * T];
     unsigned char* byte_rec_image_err = new unsigned char[T * T];
    truncate_double_to_byte(rec_img,byte_rec_image, circle.img, 
@@ -97,21 +107,22 @@ void test_DIM(double lw, int func, const char* name, const char* path, int A) {
     stbi_write_png(gen_name(IMAGE_REC, name, path, A), T, T, 1, byte_rec_image, T);
     stbi_write_png(gen_name(IMAGE_ERR, name, path, A), T, T, 1, byte_rec_image_err, T);
     
+    // Colour error map (red = positive error, blue = negative, green = max)
+
     unsigned char* byte_rec_image_err_с = new unsigned char[3 * T * T];
     memset(byte_rec_image_err_с, 0, 3 * T * T);
    
-        truncate_double_to_byte_с(rec_img, byte_rec_image,
+        truncate_double_to_byte_color(rec_img, byte_rec_image,
             circle.img,
             byte_rec_image_err_с, T);
   
     CH3_to_RGB(gen_name(IMAGE_ERR_С, name, path, A), byte_rec_image_err_с, T, T, 3);
-    
+    // Write quality metrics to text file
     ERRORS(file,
         rec_img, circle.img,
         forward_result(X, A, rec_img), circle.sngm,
         T * T, T * A);
-
-    ///----------------------------------------------
+    // Cleanup
     delete[] sino;
     delete[] circle.img;
     delete[] circle.sngm;
@@ -232,7 +243,7 @@ void test_FBP(int norm, int filter_type,  const char* name, const char* path, in
     stbi_write_png(gen_name(IMAGE_ERR, name, path, A), T, T, 1, byte_rec_image_err, T);
     unsigned char* byte_rec_image_err_с = new unsigned char[3 * T * T];
 
-    truncate_double_to_byte_с(rec_img, byte_rec_image,
+    truncate_double_to_byte_color(rec_img, byte_rec_image,
         circle.img,
         byte_rec_image_err_с, T);
 

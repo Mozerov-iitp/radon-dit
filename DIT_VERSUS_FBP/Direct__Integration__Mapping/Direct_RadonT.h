@@ -917,7 +917,7 @@ void truncate_double_to_byte(double* in,
 	}
 
 }
-void truncate_double_to_byte_ñ(double* in,
+void truncate_double_to_byte_color(double* in,
 	unsigned char* result, unsigned char* gt, unsigned char* err_m, int T) {
 	
 	int p = T * T; while (p--) {
