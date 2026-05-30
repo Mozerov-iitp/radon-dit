@@ -58,66 +58,189 @@ complex_dbl* GetSngmTet0(float* in, int D, int A, double tet) {
  * Linear interpolation between two consecutive projections.
  */
 complex_dbl* GetSngmTet1(float* in, int D, int A, double tet) {
-
-	double* b[2] = { new double [D], new double[D] };
+	// Allocate output buffer for the interpolated profile
 	complex_dbl* ret = new complex_dbl[D];
+
+	// Angular step size for the [0, PI) range
 	double da = M_PI / A;
+
+	// 1. Handle negative angles from atan2 [-PI, PI] by shifting them to the positive domain
+	bool global_flip = false;
+	if (tet < 0.0) {
+		tet += M_PI;
+		global_flip = true; // Signal that the final spatial profile must be mirrored
+	}
+	if (tet >= M_PI) {
+		tet -= M_PI;
+		global_flip = !global_flip;
+	}
+
+	// Map the continuous angle to fractional coordinate space
 	double a = tet / da;
 	int a1 = (int)a;
-	int a2 = (a1 + 1) % A;
-	double d = a - a1;
+	double d = a - a1; // Linear interpolation weight
 
-	int p = D; while (p--)
-	{
-		b[0][p] = (double)in[p + a1 * D];
-		b[1][p] = (double)in[p + a2 * D];
+	// 2. Setup the right-hand neighbor angle index and its boundary condition
+	int a2 = a1 + 1;
+	bool local_flip = false;
 
+	// If the right-hand point hits or exceeds 180 degrees, warp it back to 0 with an axis flip
+	if (a2 >= A) {
+		a2 -= A;
+		local_flip = true;
 	}
-	p = D; while (p--)ret[p] = 
-	{ (double)in[p + a1 * D]*(1.-d) + (double)in[p + a2 * D] * (d), 0};
-	delete[] b[0];
-	delete[] b[1];
+
+	// 3. Process the interpolation directly without temporary heap allocations
+	for (int p = 0; p < D; p++) {
+		// Retrieve values from the left angular neighbor (always inside bounds or normalized)
+		double val1 = (double)in[a1 * D + p];
+
+		// Retrieve values from the right angular neighbor with a conditional channel flip
+		int target_p = local_flip ? (D - 1 - p) : p;
+		double val2 = (double)in[a2 * D + target_p];
+
+		// Perform linear blend
+		double vl = val1 * (1.0 - d) + val2 * d;
+
+		// Write to the output array factoring in the global negative angle orientation
+		int final_p = global_flip ? (D - 1 - p) : p;
+		ret[final_p] = complex_dbl(vl, 0.0);
+	}
+
 	return ret;
 }
+//complex_dbl* GetSngmTet1(float* in, int D, int A, double tet) {
+//
+//	double* b[2] = { new double [D], new double[D] };
+//	complex_dbl* ret = new complex_dbl[D];
+//	double da = M_PI / A;
+//	double a = tet / da;
+//	int a1 = (int)a;
+//	int a2 = (a1 + 1) > A - 1 ? A - 1 : a1 + 1;
+//	double d = a - a1;
+//
+//	int p = D; while (p--)
+//	{
+//		b[0][p] = (double)in[p + a1 * D];
+//		b[1][p] = (double)in[p + a2 * D];
+//
+//	}
+//	p = D; while (p--)ret[p] = 
+//	{ (double)in[p + a1 * D]*(1.-d) + (double)in[p + a2 * D] * (d), 0};
+//	delete[] b[0];
+//	delete[] b[1];
+//	return ret;
+//}
 /**
  * Cubic spline interpolation (Catmull‑Rom style) over four adjacent angles.
  */
-complex_dbl* GetSngmTetCubic(float* in, int D, int A, double tet) {
+//complex_dbl* GetSngmTetCubic(float* in, int D, int A, double tet) {
+//
+//	double* b[4] = { new double[D], new double[D], new double[D], new double[D] };
+//	complex_dbl* ret = new complex_dbl[D];
+//	double da = M_PI / A;
+//	double a = tet / da;
+//	int a1 = (int)a;
+//	int a_1 = a1 -1 <0 ? 0: a1-1;
+//	int a2 = (a1 + 1) > A - 1 ? A - 1 : a1 + 1;
+//	int a3 = (a1 + 2) > A - 1 ? A - 1 : a1 + 2;
+//	double d = a - a1;
+//
+//	int p = D; while (p--)
+//	{
+//		b[0][p] = (double)in[p + a_1 * D];
+//		b[1][p] = (double)in[p + a1 * D];
+//		b[2][p] = (double)in[p + a2 * D];
+//		b[3][p] = (double)in[p + a3 * D];
+//
+//	}
+//	p = D; while (p--) {
+//		double bb[4] = { b[0][p],b[1][p], b[2][p], b[2][p] };
+//		double vl = cubicInterpolate(bb, d);
+//		ret[p] = { vl,0 };
+//	}
+//	delete[] b[0];
+//	delete[] b[1];
+//	delete[] b[2];
+//	delete[] b[3];
+//	return ret;
+//}
+///**
+// * Dispatch function for angular interpolation.
+// * @param func  0=nearest, 1=linear, 2=cubic.
+// */
 
-	double* b[4] = { new double[D], new double[D], new double[D], new double[D] };
+complex_dbl* GetSngmTetCubic(float* in, int D, int A, double tet) {
+	// Dynamically allocate the resulting complex projection vector
 	complex_dbl* ret = new complex_dbl[D];
+
+	// Angular step size of the sparse input sinogram (spanning [0, PI))
 	double da = M_PI / A;
+
+	// 1. Normalize negative angles from atan2 [-PI, PI] to the positive [0, 2*PI] domain
+	bool global_flip = false;
+	if (tet < 0.0) {
+		tet += M_PI;
+		global_flip = true; // Mark that the detector channel axis must be reversed
+	}
+	// Handle edge case where tet could slightly exceed or equal PI due to precision
+	if (tet >= M_PI) {
+		tet -= M_PI;
+		global_flip = !global_flip;
+	}
+
+	// Convert continuous angle to fractional coordinate index
 	double a = tet / da;
 	int a1 = (int)a;
-	int a_1 = a1 == 0 ? A - 1 : a1 - 1;
-	int a2 = (a1 + 1) % A;
-	int a3 = (a1 + 2) % A;
-	double d = a - a1;
+	double d = a - a1; // Interpolation weight (fractional part)
 
-	int p = D; while (p--)
-	{
-		b[0][p] = (double)in[p + a_1 * D];
-		b[1][p] = (double)in[p + a1 * D];
-		b[2][p] = (double)in[p + a2 * D];
-		b[3][p] = (double)in[p + a3 * D];
+	// Temporary arrays to hold data for the 4 neighboring angles
+	double* b[4] = { new double[D], new double[D], new double[D], new double[D] };
 
+	// 2. Compute indices for the 4-point cubic stencil with 180-degree Radon boundary conditions
+	for (int i = -1; i <= 2; i++) {
+		int neighbor_angle = a1 + i;
+		bool local_flip = false;
+
+		// Apply anti-periodic wrap-around rules if index steps outside [0, A-1]
+		if (neighbor_angle < 0) {
+			neighbor_angle = A + neighbor_angle;
+			local_flip = true;
+		}
+		else if (neighbor_angle >= A) {
+			neighbor_angle = neighbor_angle - A;
+			local_flip = true;
+		}
+
+		// Fill the current angle row, account for geometric flip conditions
+		for (int p = 0; p < D; p++) {
+			// Determine target channel tracking based on the anti-periodic layout
+			int target_p = local_flip ? (D - 1 - p) : p;
+
+			// Your sinogram indexing convention layout: [angle * D + offset]
+			b[i + 1][p] = (double)in[neighbor_angle * D + target_p];
+		}
 	}
-	p = D; while (p--) {
-		double bb[4] = { b[0][p],b[1][p], b[2][p], b[2][p] };
+
+	// 3. Perform the cubic interpolation and handle global coordinate sign inversion
+	for (int p = 0; p < D; p++) {
+		// FIXED: Replaced the duplicated b[2][p] with b[3][p]
+		double bb[4] = { b[0][p], b[1][p], b[2][p], b[3][p] };
 		double vl = cubicInterpolate(bb, d);
-		ret[p] = { vl,0 };
+
+		// Map the final value to its appropriate channel based on the initial angle sign
+		int final_p = global_flip ? (D - 1 - p) : p;
+		ret[final_p] = complex_dbl(vl, 0.0);
 	}
-	delete[] b[0];
-	delete[] b[1];
-	delete[] b[2];
-	delete[] b[3];
+
+	// Clean up temporary memory buffers
+	delete[] b[0]; delete[] b[1]; delete[] b[2]; delete[] b[3];
+
 	return ret;
 }
-/**
- * Dispatch function for angular interpolation.
- * @param func  0=nearest, 1=linear, 2=cubic.
- */
-complex_dbl* GetSngmTetIntrpl(int func, float* in, int D, int A, double tet) {
+
+complex_dbl* GetSngmTetIntrpl(int func, 
+	float* in, int D, int A, double tet) {
 
 	complex_dbl* ret = NULL;
 	if (func == 2)return GetSngmTetCubic(in, D, A, tet);
