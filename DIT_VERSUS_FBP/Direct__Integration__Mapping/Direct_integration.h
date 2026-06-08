@@ -390,7 +390,7 @@ complex_dbl* dir_intgt_mapping_intrpl(double lw,  int func, float* in, int D, in
 			int vv = -i_v < 0 ? -i_v + D : -i_v;
 			int pp = uu + vv * D;
 
-			bool do_it = (i_v > 0) || ((i_u >= 0) && (i_v >= 0));
+			bool do_it = (i_v > 0) || ((i_u > 0) && (i_v == 0));
 			//--------------------
 			double tet = atan2(i_v, i_u);
 
