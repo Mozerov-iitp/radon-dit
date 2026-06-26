@@ -36,7 +36,7 @@ typedef struct {
 #define IMAGE_REC_NOISE 6
 #define IMAGE_ERR_NOISE 7
 #define RESULT_TXT_NOISE 8
-#define IMAGE_ERR_Ñ 9
+#define IMAGE_ERR_C 9
 
 
 char* concat(const char* s1, const char* s2)
@@ -117,7 +117,7 @@ const char* gen_name( int func, const char* name, const char* folder, int A)
 		img_ret = concat(fld_fld, name_png);
 		return img_ret;
 		break;
-	case IMAGE_ERR_Ñ:
+	case IMAGE_ERR_C:
 		name_rec = concat(name, "_err_ñ_");
 		name_A = concat(name_rec, num_A);
 		name_png = concat(name_A, ".png");

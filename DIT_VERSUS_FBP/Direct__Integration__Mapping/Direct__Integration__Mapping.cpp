@@ -116,7 +116,7 @@ void test_DIM(double lw, int func, const char* name, const char* path, int A) {
             circle.img,
             byte_rec_image_err_с, T);
   
-    CH3_to_RGB(gen_name(IMAGE_ERR_С, name, path, A), byte_rec_image_err_с, T, T, 3);
+    CH3_to_RGB(gen_name(IMAGE_ERR_C, name, path, A), byte_rec_image_err_с, T, T, 3);
     // Write quality metrics to text file
     ERRORS(file,
         rec_img, circle.img,
@@ -247,7 +247,7 @@ void test_FBP(int norm, int filter_type,  const char* name, const char* path, in
         circle.img,
         byte_rec_image_err_с, T);
 
-    CH3_to_RGB(gen_name(IMAGE_ERR_С, name, path, A), byte_rec_image_err_с, T, T, 3);
+    CH3_to_RGB(gen_name(IMAGE_ERR_C, name, path, A), byte_rec_image_err_с, T, T, 3);
 
 
     ERRORS(file,
