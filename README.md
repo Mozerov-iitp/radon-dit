@@ -5,6 +5,12 @@ This repository contains the source code and datasets for the following paper:
 > **"The Direct Integration Theorem: A Rigorous Framework for Consistent Discrete Solutions of the Inverse Radon Problem"** (M. G. Mozerov). 
 > *Currently under review in IEEE Transactions on Pattern Analysis and Machine Intelligence (Submitted May 2026).*
 
+## 🚀 Live Cloud Reproducibility (CodeOcean Capsule)
+An official, fully configured compute capsule is available for this project on CodeOcean. It allows you to run the complete reconstruction pipeline (processing the full batch of 10 test images) directly in your web browser via a user-friendly interface — no local C++ toolchains, compilers, or manual dataset setups required:
+
+👉 **[Run the Code in the Cloud on CodeOcean](https://codeocean.com)**
+
+*Note for Reviewers:* Use the left App Panel to select the reconstruction technique (Direct Integration / FBP) and the number of projection angles, then click **Run** to re-generate all PNG results and numerical metric files in real-time.
 
 ## Overview
 This paper presents a novel Direct Integration Theorem (DIT), derived as a non-trivial corollary of the classical Central Slice Theorem (CST). The DIT provides a mathematically consistent transition from the continuous to the discrete domain—a fundamental challenge in computed tomography—thereby eliminating the need for frequency-domain interpolation without resorting to conventional ramp-filtering. 
@@ -18,10 +24,12 @@ Mathematical modeling demonstrates that this approach achieves quasi-exact recon
 ## Repository Structure
 * `DIT_VERSUS_FBP/` — C++ source code and MS Visual Studio 2022 project files.
 * `DIT_BIN/` — Dataset of 10 test images (512x512) used in the study.
-## Instructions
+
+## Local Instructions (Windows / Visual Studio)
 1. **Data:** Place the `DIT_BIN` folder in the root of any local drive (e.g., `D:\DIT_BIN\`).
 2. **Build:** Open `Direct__Integration__Mapping.sln` in Visual Studio 2022.
 3. **Run:** Build in **Release / x64** mode. 
     * **Note:** Upon execution, the interactive console will ask for the drive letter (C, D, E, or F) where the `DIT_BIN` folder is located. Ensure the folder is in the root directory for the program to find the test images.
+
 ## Citation
 If you find this work useful for your research, please cite the corresponding paper (refer to the manuscript or arXiv for the latest citation format).
