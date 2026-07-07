@@ -8,11 +8,9 @@ This repository contains the source code and datasets for the following paper:
 ## 🚀 Live Cloud Reproducibility (CodeOcean Capsule)
 An official, fully configured compute capsule is available for this project on CodeOcean. It allows you to run the complete reconstruction pipeline (processing the full batch of 10 test images) directly in your web browser via a user-friendly interface — no local C++ toolchains, compilers, or manual dataset setups required:
 
-👉 **[Run the Code in the Cloud on CodeOcean](https://codeocean.com)**
+👉 **[Run the Code in the Cloud on CodeOcean](https://codeocean.com/capsule/4471159/tree/v1)**
 
 [![DOI](https://shields.io)](https://doi.org/10.24433/CO.9341385.v1)
-
-[![DOI](https://shields.io)](https://doi.org)
 
 *Note for Reviewers:* Use the left App Panel to select the reconstruction technique (Direct Integration / FBP) and the number of projection angles, then click **Run** to re-generate all PNG results and numerical metric files in real-time.
 
